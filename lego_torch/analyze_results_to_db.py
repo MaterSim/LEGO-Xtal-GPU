@@ -1,7 +1,7 @@
 import numpy as np
 import os
 from pyxtal import pyxtal
-from batch_sym import Symmetry
+from lego_torch.batch_sym import Symmetry
 from pyxtal.lego.builder import builder
 import time
 
@@ -25,8 +25,8 @@ def analyze_crystal_results(combined_results, loss_threshold=1e6, min_loss=-1,
         print(f"  Loss range: {min_loss} < loss < {loss_threshold}")
         print(f"  Output directory: {output_dir}")
     
-    # Initialize Symmetry and builder
-    WP = Symmetry(csv_file="wyckoff_list.csv")
+    wyckoff_csv = os.path.join(os.path.dirname(__file__), "wyckoff_list.csv")
+    WP = Symmetry(csv_file=wyckoff_csv)
     
     # Setup reference structure and builder
     xtal_ref = pyxtal()

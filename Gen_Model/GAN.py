@@ -207,15 +207,11 @@ class GAN(BaseSynthesizer):
         self._data_sampler = None
         self._generator = None
         self.loss_values = None
-        self.type = type
         self.root_folder = folder
-        self.type_folder = os.path.join(self.root_folder, self.type)
-        self.samples_folder = os.path.join(self.type_folder, 'samples')
-        self.model_folder = os.path.join(self.type_folder, 'models')
-        os.makedirs(self.root_folder, exist_ok=True)
-        os.makedirs(self.type_folder, exist_ok=True)
+        self.samples_folder = os.path.join(self.root_folder, 'samples')
+        os.makedirs('models', exist_ok=True)
         os.makedirs(self.samples_folder, exist_ok=True)
-        os.makedirs(self.model_folder, exist_ok=True)
+   
 
     @staticmethod
     def _gumbel_softmax(logits, tau=1, hard=False, eps=1e-10, dim=-1):
@@ -431,27 +427,28 @@ class GAN(BaseSynthesizer):
                     description.format(gen=generator_loss, dis=discriminator_loss)
                 )
             # Save model and generate samples every 50 epochs
-            if (i + 1) % 50 == 0:
-                
-                # Save model
+            if True:
+                if (i + 1) % 50 == 0:
+                    
+                    # Save model
+                    os.makedirs('models', exist_ok=True)
+                    model_path = f'models/GAN_model_checkpoint_epoch_{i+1}.pkl'
 
-                model_path = f'{self.model_folder}/GAN_{self.type}_model_checkpoint_epoch_{i+1}.pkl'
-
-                self.save(model_path)
-                print(f"GAN model saved at epoch {i+1} to {model_path}")
-                
-                # Generate 100k samples
-
-                samples_path = f'{self.samples_folder}/GAN_{self.type}_samples_epoch_{i+1}.csv'
-                samples = self.sample(500000)
-                
-                # Save samples (assuming they're a DataFrame or can be converted to one)
-                if isinstance(samples, np.ndarray):
-                    pd.DataFrame(samples).to_csv(samples_path, index=False)
-                else:
-                    samples.to_csv(samples_path, index=False)
-                print(f"Generated 100k samples at epoch {i+1}, saved to {samples_path}")
-        
+                    self.save(model_path)
+                    print(f"GAN model saved at epoch {i+1} to {model_path}")
+                    
+                    # Generate 100k samples
+                    os.makedirs(self.samples_folder, exist_ok=True)
+                    samples_path = f'{self.samples_folder}/GAN_samples_epoch_{i+1}.csv'
+                    samples = self.sample(500000)
+                    
+                    # Save samples (assuming they're a DataFrame or can be converted to one)
+                    if isinstance(samples, np.ndarray):
+                        pd.DataFrame(samples).to_csv(samples_path, index=False)
+                    else:
+                        samples.to_csv(samples_path, index=False)
+                    print(f"Generated 100k samples at epoch {i+1}, saved to {samples_path}")
+            
         # Plot losses at the end of training
         self.plot_losses()
 

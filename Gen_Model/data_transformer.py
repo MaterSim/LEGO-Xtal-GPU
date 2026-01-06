@@ -7,6 +7,10 @@ import numpy as np
 import pandas as pd
 from joblib import Parallel, delayed
 from rdt.transformers import ClusterBasedNormalizer, OneHotEncoder
+from torch.utils.data import Dataset, DataLoader
+import torch
+from torch.utils.data.sampler import BatchSampler
+from torch import nn
 
 SpanInfo = namedtuple('SpanInfo', ['dim', 'activation_fn'])
 ColumnTransformInfo = namedtuple(
@@ -14,7 +18,30 @@ ColumnTransformInfo = namedtuple(
     ['column_name', 'column_type', 'transform', 'output_info', 'output_dimensions'],
 )
 
+class ConditionDataset(Dataset):
+    def __init__(self, data, condition):
+        # method will run once when class object is created.
+        # method will create data at the time of object creation.
+        # this will save time of training
+        super(ConditionDataset, self).__init__()
+        dataset = []
 
+        for row in range(len(data)):
+            first = data[row]
+            second = condition[row]
+            
+            first = first.detach().cpu()
+            #second = torch.from_numpy(np.array(second, dtype = np.float32))
+
+            dataset.append((first, second))
+        
+        self.dataset = dataset
+    def __len__(self):
+        return len(self.dataset)
+
+    def __getitem__(self, i):
+        return self.dataset[i]
+    
 class DataTransformer(object):
     """
     Data Transformer.
@@ -267,3 +294,4 @@ class DataTransformer(object):
             'column_id': column_id,
             'value_id': np.argmax(one_hot),
         }
+    

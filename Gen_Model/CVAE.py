@@ -88,7 +88,7 @@ class Condition_embedding(Module):
         return output
 
 
-class VAE_cont(BaseSynthesizer):
+class CVAE(BaseSynthesizer):
     """
     Variational Autoencoder (VAE) for tabular data.
 
@@ -112,13 +112,12 @@ class VAE_cont(BaseSynthesizer):
         l2scale=1e-5,
         batch_size=2000,
         epochs=300,
-        loss_factor_KL=2,
-        loss_factor_CE=1.0,
-        loss_factor_NLL=1.0,
+        loss_factor_KL=1,
+        loss_factor_CE=2.0,
+        loss_factor_NLL=0.1,
         cuda=True,
         verbose=True,
-        type='discrete',
-        folder='LEGO-VAE',
+        type='discrete'
     ):
         self.embedding_dim = embedding_dim
         self.compress_dims = compress_dims
@@ -143,15 +142,6 @@ class VAE_cont(BaseSynthesizer):
         self._device = torch.device(device)
         #store encoded features for last step
 
-        self.type = type
-        self.root_folder = folder
-        self.type_folder = os.path.join(self.root_folder, self.type)
-        self.samples_folder = os.path.join(self.type_folder, 'samples')
-        self.model_folder = os.path.join(self.type_folder, 'models')
-        os.makedirs(self.root_folder, exist_ok=True)
-        os.makedirs(self.type_folder, exist_ok=True)
-        os.makedirs(self.samples_folder, exist_ok=True)
-        os.makedirs(self.model_folder, exist_ok=True)
 
     def plot_losses(self, loss_values, filename='average_loss_plot.png'):
         """
@@ -170,7 +160,7 @@ class VAE_cont(BaseSynthesizer):
         plt.title('VAE Training Average Loss per Epoch')
         plt.legend()
         plt.grid(True)
-        plt.savefig(os.path.join(self.type_folder, filename))
+        plt.savefig(os.path.join('models', filename))
         plt.close()
 
     def save(self, filepath):

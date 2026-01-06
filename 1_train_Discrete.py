@@ -41,6 +41,11 @@ if __name__ == "__main__":
         type=int, 
         default=100000, 
         help="Output sample size")
+    parser.add_argument(
+        "--output_file", 
+        type=str, 
+        default="synthetic-wps.csv", 
+        help="Output file path")
 
     args = parser.parse_args()
     np.random.seed(args.seed)
@@ -117,7 +122,7 @@ if __name__ == "__main__":
     synthesizer.fit(df, discrete_columns=dis_cols)
 
     # Save trained model
-    model_path = f"models/{args.model}/discrete_model.pkl"
+    model_path = f"models/{args.model}_discrete_model.pkl"
     synthesizer.save(model_path)
     print(f"Trained model saved to {model_path}")
 
@@ -130,7 +135,8 @@ if __name__ == "__main__":
 
     print(f"(synthetic data sample\n {df_synthetic.head(10)}\n")
     os.makedirs("data/sample", exist_ok=True)
-    output_file = f"data/sample/{args.model}-dis{len(dis_cols)}-{args.sample}.csv"
+    
+    output_file = args.output_file
     print(f"Save {synthetic_data_size} samples to {output_file}")
     df_synthetic.columns = df_synthetic.columns.str.replace(" ", "")
     df_synthetic = df_synthetic.map(lambda x: str(x).replace(",", " "))
