@@ -4,8 +4,8 @@ import numpy as np
 import pandas as pd
 import torch
 
-from lego.GAN import GAN
-from lego.VAE import VAE
+from Gen_Model.GAN import GAN
+from Gen_Model.VAE import VAE
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Table Synthesizer")
@@ -18,7 +18,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--epochs",
         type=int,
-        default=250,
+        default=1,
         help="Number of epochs for training (default: 250)",
     )
     parser.add_argument(
@@ -65,24 +65,15 @@ if __name__ == "__main__":
     print(f"Data shape {df.shape} \n")
     print(f"Data Head \n {df.head()} \n")
 
-    # Set up the categorical columns
+    # Set up the categorical columns - only spg and wp0-wp7 for discrete stage
     dis_cols = ["spg"]
-    num_wps = int((len(df.columns) - 7) / 4)
-    if abs(df['a'][0] - round(df['a'][0])) < 1e-2: 
-        discrete_cell = True
-        dis_cols.extend(['a', 'b', 'c', 'alpha', 'beta', 'gamma'])
-    else:
-        discrete_cell = False
-
-    discrete = df['x0'].max() >= 2.5 + 1e-3
-
-    for i in range(num_wps): 
+    for i in range(8):  # Fixed 8 Wyckoff positions
         dis_cols.append('wp' + str(i))
-        if discrete:
-            dis_cols.append('x' + str(i))
-            dis_cols.append('y' + str(i))
-            dis_cols.append('z' + str(i))
-    #dis_cols.append('label')
+    
+    # Filter dataframe to only include discrete columns
+    df = df[dis_cols]
+    print(f"\nFiltered data shape (discrete columns only): {df.shape}")
+    print(f"Columns used: {dis_cols}\n")
 
     # Initialize synthesizer with specified parameters
     os.makedirs("models", exist_ok=True)
@@ -124,6 +115,11 @@ if __name__ == "__main__":
 
     # Train models
     synthesizer.fit(df, discrete_columns=dis_cols)
+
+    # Save trained model
+    model_path = f"models/{args.model}/discrete_model.pkl"
+    synthesizer.save(model_path)
+    print(f"Trained model saved to {model_path}")
 
     # Output is stored in synthetic_data
     if args.sample is None:
