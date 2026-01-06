@@ -11,10 +11,10 @@ import torch.optim as optim
 import time
 import os
 
-from lego.VAE import VAE
-from lego.VAE_cont_Diff_GMM import VAE_cont
-from SO3 import SO3
-from batch_sym import Symmetry
+from Gen_Model.VAE import VAE
+from Gen_Model.CVAE import CVAE
+from .SO3 import SO3
+from .batch_sym import Symmetry
 from typing import Optional
 # Global constants
 import time
@@ -67,7 +67,7 @@ def setup_environment():
     global WP, f0, p_ref0
 
     # Initialize symmetry and SO3 objects
-    WP = Symmetry(csv_file="wyckoff_list.csv")
+    WP = Symmetry(csv_file=os.path.join(os.path.dirname(__file__), "wyckoff_list.csv"))
     f0 = SO3(lmax=4, nmax=2, alpha=1.5, rcut=2.1, max_N=100)
     p_ref0 = compute_ref_p(f0,WP)
     print(f"p_ref0 : {p_ref0}")
@@ -365,7 +365,7 @@ def prepare_wyckoff_list(wps_b,batch_size):
 def process_batch(dis_batch, 
         batch_start, 
         batch_end, 
-        VAE_cont_model, 
+        CVAE_model, 
         num_steps, 
         ed=128,
         per_sample_clip: Optional[float] = 10.0,
@@ -385,22 +385,22 @@ def process_batch(dis_batch,
     
     # Initialize latent vectors for this batch
     latent_dim = ed
-    z = torch.randn(batch_size, latent_dim, device=VAE_cont_model._device, requires_grad=True)
+    z = torch.randn(batch_size, latent_dim, device=CVAE_model._device, requires_grad=True)
     #print(f"Initial z: {z.detach().cpu().numpy()[:2,:5]} ...")
     
     
     # Prepare conditioning input
-    dis_tensor = torch.tensor(dis_batch.values, dtype=torch.float32, device=VAE_cont_model._device)
+    dis_tensor = torch.tensor(dis_batch.values, dtype=torch.float32, device=CVAE_model._device)
     
-    condition = VAE_cont_model.transformer_condition.transform(dis_batch)
-    cond_tensor = torch.tensor(condition, dtype=torch.float32, device=VAE_cont_model._device)
-    cond_latent = VAE_cont_model.condition_layer(cond_tensor)
+    condition = CVAE_model.transformer_condition.transform(dis_batch)
+    cond_tensor = torch.tensor(condition, dtype=torch.float32, device=CVAE_model._device)
+    cond_latent = CVAE_model.condition_layer(cond_tensor)
     #initialize and store initial synthetic data
     with torch.no_grad():
         z_initial = z.clone()
         full_latent = torch.cat((z_initial, cond_latent), dim=1)
-        decoded, _ = VAE_cont_model.decoder(full_latent)
-        output_orig = VAE_cont_model.transformer_data.inverse(decoded)
+        decoded, _ = CVAE_model.decoder(full_latent)
+        output_orig = CVAE_model.transformer_data.inverse(decoded)
         # Convert dis_tensor to same dtype as output_orig for assembly
         dis_tensor_for_assembly = dis_tensor.to(dtype=output_orig.dtype)
         synthetic_data = assemble_data(dis_tensor_for_assembly, output_orig)
@@ -458,8 +458,8 @@ def process_batch(dis_batch,
         
         # Generate from latent vectors
         full_latent = torch.cat((z, cond_latent), dim=1)
-        decoded, _ = VAE_cont_model.decoder(full_latent)
-        output_orig = VAE_cont_model.transformer_data.inverse(decoded)
+        decoded, _ = CVAE_model.decoder(full_latent)
+        output_orig = CVAE_model.transformer_data.inverse(decoded)
         # Convert dis_tensor to same dtype as output_orig for assembly
         dis_tensor_for_assembly = dis_tensor.to(dtype=output_orig.dtype)
         synthetic_data = assemble_data(dis_tensor_for_assembly, output_orig)
@@ -601,27 +601,26 @@ def run_latent_optimization(
     print(f"Using latent dimension: {latent_dim} for this run {run} of latent and representation optimization")
     overall_t0 = time.time()
     setup_environment()
-    os.makedirs(f"Batch_data_{latent_dim}", exist_ok=True)
 
     print(f"Total batches: {(num + batch_size - 1) // batch_size}")
 
     # Load VAE model
-    VAE_cont_model = VAE_cont()
+    CVAE_model = CVAE()
     
     try:
         model_path = model_path_template.format(latent_dim)
-        VAE_cont_model.load(model_path)
+        CVAE_model.load(model_path)
     except FileNotFoundError:
         print(f"Model file not found at {model_path}, trying local path...")
 
     print(f"VAE model loaded with latent dimension {latent_dim}")
     
     # Prepare model for inference - freeze decoder and use eval mode
-    VAE_cont_model.decoder.eval()  # Use eval mode for deterministic behavior
-    VAE_cont_model.condition_layer.eval()  
-    for param in VAE_cont_model.decoder.parameters():
+    CVAE_model.decoder.eval()  # Use eval mode for deterministic behavior
+    CVAE_model.condition_layer.eval()  
+    for param in CVAE_model.decoder.parameters():
         param.requires_grad = False
-    for param in VAE_cont_model.condition_layer.parameters():
+    for param in CVAE_model.condition_layer.parameters():
         param.requires_grad = False
     
 
@@ -644,7 +643,7 @@ def run_latent_optimization(
             dis_batch, 
             batch_start_idx, 
             batch_end_idx, 
-            VAE_cont_model,
+            CVAE_model,
             steps,
             ed=latent_dim
         )
@@ -666,12 +665,6 @@ def run_latent_optimization(
         for key in combined_results.keys():
             combined_results[key].extend(batch_results[key])
     
-    # Save results to files
-    os.makedirs(f"results_{latent_dim}", exist_ok=True)
-    output_file = f"results_{latent_dim}/combined_results_2stage-opt_latent-{latent_dim}_run-{run}_batch{batch_size}.pkl"
-    with open(output_file, 'wb') as f:
-        import pickle
-        pickle.dump(combined_results, f)
     
     return combined_results
 

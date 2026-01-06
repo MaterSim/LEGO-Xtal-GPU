@@ -34,6 +34,7 @@ items = {
     'CVAE_OUT': g(['cvae', 'out'], 'models/VAE_stage2.pt'),
     'CVAE_EMBED': g(['cvae', 'embed'], 128),
     'LATENT_DIM': g(['cvae', 'embed'], 128),
+    'RELAX_TYPE': g(['relax', 'type'], 'single'),
     'RELAX_NUM': g(['relax', 'num'], 100),
     'RELAX_LOG_DIR': g(['relax', 'log_dir'], 'results'),
     'TOPO_CHUNK': g(['topology', 'chunk_size'], 1000),
@@ -66,8 +67,19 @@ export MKL_DYNAMIC=FALSE
 export OPENBLAS_MAIN_FREE=1
 
 NAME="synthetic_${DIS_MODEL}_dis${DIS_SAMPLE}_CVAE_hd${CVAE_HIDDEN}_e${CVAE_EPOCHS}"
-CPU=${CPU:-96}
 
-python 4_energy.py \
-    --name "${NAME}" \
-    --cpu "${CPU}"
+if [[ "${RELAX_TYPE}" == "multi" ]]; then
+    echo "Running multi-optimization post-processing..."
+    python b-post_process_multi-opt.py \
+        --name "${RELAX_LOG_DIR}/${NAME}_type${RELAX_TYPE}" \
+        --cpu "${ENERGY_CPU}" 
+
+    echo "Multi-optimization post-processing completed at $(date)"
+else
+    echo "Running single-pass energy analysis..."
+    python 4_energy.py \
+        --name "${NAME}_type${RELAX_TYPE}" \
+        --cpu "${ENERGY_CPU}" 
+
+    echo "Energy analysis completed at $(date)"
+fi

@@ -25,7 +25,7 @@ CPU_JOB=$(sbatch --parsable --dependency=afterok:${GPU_JOB} <<'EOF'
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=96
-#SBATCH --time=120:00:00
+#SBATCH --time=1:00:00
 #SBATCH --mem-per-cpu=2G
 #SBATCH --output=slurm-%x-%j.out
 

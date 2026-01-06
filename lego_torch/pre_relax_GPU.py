@@ -6,6 +6,7 @@ from torch.optim.lr_scheduler import StepLR
 import time
 from pyxtal.lego.builder import builder
 import numpy as np
+import pandas as pd
 import pickle
 from lego_torch.analyze_results_to_db import analyze_crystal_results
 from typing import Optional
@@ -222,7 +223,18 @@ def process_batch(
     b_t0 = time.time()
     # Select batch data from the loaded CSV
     batch_data_slice = batch_data[batch_start:batch_end]
-    batch_data_slice = torch.tensor(batch_data_slice, dtype=torch.float64,device='cuda' if torch.cuda.is_available() else 'cpu')
+    # Convert DataFrame or other sequence types to a proper NumPy array
+    if isinstance(batch_data_slice, pd.DataFrame):
+        batch_np = batch_data_slice.to_numpy()
+    else:
+        batch_np = np.asarray(batch_data_slice)
+    if batch_np.ndim == 1:
+        batch_np = batch_np.reshape(1, -1)
+    batch_data_slice = torch.tensor(
+        batch_np,
+        dtype=torch.float64,
+        device='cuda' if torch.cuda.is_available() else 'cpu'
+    )
     spg_b, wps_b, rep_b = WP.get_batch_from_rows(batch_data_slice, radian=True,
                                                  normalize_in=False,
                                                  normalize_out=True,
@@ -375,7 +387,7 @@ if __name__ == "__main__":
     import pandas as pd
     
     # Initialize global variables
-    WP = Symmetry(csv_file="lego_torch/wyckoff_list.csv")
+    WP = Symmetry(csv_file=os.path.join(os.path.dirname(__file__), "wyckoff_list.csv"))
     f0 = SO3(lmax=4, nmax=2, alpha=1.5, rcut=2.1, max_N=100)
     p_ref0 = compute_ref_p(f0, WP)
     start = args.start
