@@ -1,0 +1,18 @@
+data: ./data/train/train-v4.csv
+
+discrete:
+  model: GAN
+  epochs: 10
+  batch: 500
+  sample: 100
+
+cvae:
+  hidden: 1024
+  batch: 2048
+  epochs: 10
+  embed: 128
+  out: models/VAE_stage2.pt
+
+relax:
+  num: 100
+  log_dir: results
