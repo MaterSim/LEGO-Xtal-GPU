@@ -2,17 +2,40 @@ data: ./data/train/train-v4.csv
 
 discrete:
   model: GAN
-  epochs: 10
+  epochs: 250
   batch: 500
-  sample: 100
+  sample: 1000
 
 cvae:
   hidden: 1024
   batch: 2048
-  epochs: 10
+  epochs: 250
   embed: 128
   out: models/VAE_stage2.pt
 
 relax:
-  num: 100
+  type: single  # single or multi
+  num: 1000
   log_dir: results
+
+topology:
+  chunk_size: 1000
+  overwrite: false
+  warmup: true
+
+energy:
+  min: -9.4
+  max: -8.8
+
+mace:
+  steps_small: 250
+  steps_medium: 100
+  steps_large: 50
+
+run_energy:
+  cpu: 96
+  rank: 0
+  skip_create: false
+  skip_topology: false
+  skip_gulp: false
+  skip_mace: false

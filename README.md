@@ -1,6 +1,6 @@
-# LEGO-Xtal: Local Environment Geometry-Oriented Crystal Generator
+# LEGO-Xtal GPU: Local Environment Geometry-Oriented Crystal Generator
 
-LEGO-Xtal (Local Environment Geometry-Oriented Crystal Generator) is designed for the rapid generation of crystal structures for complex materials characterized by well-defined local structural building units (SBUs). By leveraging a small set of known material examples, LEGO-Xtal learns target crystal structures by exploiting crystal symmetry. A generative model navigates the vast combinatorial space of symmetry operations to produce numerous trial structures, which are then optimized to ensure each atom satisfies the desired local atomic environment.
+LEGO-Xtal (Local Environment Geometry-Oriented Crystal Generator) is designed for the rapid generation of crystal structures for complex materials characterized by well-defined local structural building units (SBUs). By leveraging a small set of known material examples, LEGO-Xtal learns target crystal structures by exploiting crystal symmetry. A generative model navigates the vast combinatorial space of symmetry operations to produce numerous trial structures, which are then optimized to ensure each atom satisfies the desired local atomic environment. This repository is the GPU-accelerated version of LEGO-Xtal, with relaxation and optimization stages running on GPUs for speed. For the original implementation, see https://github.com/MaterSim/LEGO-xtal.
 
 
 
@@ -201,12 +201,12 @@ You can also run individual components:
 
 **Train Discrete Model:**
 ```bash
-python 1_train_Discrete.py --data data/train/train-v4.csv --model GAN --epochs 250 --batch 100 --sample 1000
+python 1_train_Discrete.py --data data/train/train-v4.csv --model GAN --epochs 250 --batch 512 --sample 1000
 ```
 
 **Train CVAE:**
 ```bash
-python 2_train_CVAE.py --dis-csv data/sample/GAN_dis1000.csv --data data/train/train-v4.csv --embed 128 --hidden 1024 --epochs 10 --output models/VAE_stage2.pt
+python 2_train_CVAE.py --dis-csv data/sample/GAN_dis1000.csv --data data/train/train-v4.csv --embed 128 --hidden 1024 --epochs 250 --output models/VAE_stage2.pt
 ```
 
 **Generate Synthetic Data:**
@@ -221,7 +221,7 @@ python Gen_Model/sample_CVAE.py --dis-csv data/sample/GAN_dis1000.csv --model-pa
 python 3_relax.py --data_file data/sample/test.csv --num 1000 --results_dir results/test
 ```
 
-**CPU Energy Analysis:**
+**Energy Analysis:**
 ```bash
 python 4_energy.py --name results/test --cpu 32 
 ```
