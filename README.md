@@ -136,7 +136,7 @@ discrete:
   sample_size: 100
 
 cvae:
-  hidden_dims: "1024"       # comma-separated, e.g., "1024,512"
+  hidden_dims: "1024"       
   batch_size: 500
   epochs: 10
   embed_dim: 128
@@ -144,10 +144,9 @@ cvae:
 
 relax:
   type: "single"            # "single" or "multi"
-  num: 10000                # number of structures to process
+  num: 10000                # total number of structures to process
   log_dir: "results"
 
-# ... see config file for energy, MACE, and topology settings
 ```
 
 ### 2. Train Models and Generate Structures
