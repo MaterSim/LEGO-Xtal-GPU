@@ -259,6 +259,12 @@ results/
 If you use LEGO-Xtal-GPU in your research, please cite:
 
 ```
+@article{ridwan2026crystal,
+  title={Crystal Generation using the Fully Differentiable Pipeline and Latent Space Optimization},
+  author={Ridwan, Osman Goni and Frapper, Gilles and Xue, Hongfei and Zhu, Qiang},
+  journal={arXiv preprint arXiv:2601.04606},
+  year={2026}
+}
 ```
 
 ---
